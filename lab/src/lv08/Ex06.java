@@ -46,10 +46,9 @@ class User {
 class UserManager {
 	private Random random = new Random();
 
-	private ArrayList<User> list;
+	private static ArrayList<User> list = new ArrayList<User>();
 
 	public UserManager() {
-		this.list = new ArrayList<User>();
 	}
 
 	public User createUser(String name, String phone) {
@@ -62,7 +61,7 @@ class UserManager {
 		return new User();
 	}
 
-	public User findUserByUserCode(int code) {
+	public static User findUserByUserCode(int code) {
 		for (User user : list) {
 			if (user.getCode() == code)
 				return user.clone();
@@ -76,6 +75,14 @@ class UserManager {
 				return user.clone();
 		}
 		return new User();
+	}
+	
+	public ArrayList<User> findUserAll() {
+		ArrayList<User> copy = new ArrayList<>();
+		for(User user : list) {
+			copy.add(user.clone());
+		}
+		return copy;
 	}
 
 	public void updateUserPhone(User user, String phone) {
@@ -94,6 +101,21 @@ class UserManager {
 
 	public int getUserSize() {
 		return this.list.size();
+	}
+	
+	public static void dataSetting(String data) {
+		String[] temp = data.split("\n");
+		
+		for(int i=0; i<temp.length; i++) {
+			String[] info = temp[i].split("/");
+			
+			int code = Integer.parseInt(info[0]);
+			String phone = info[1];
+			String name = info[2];
+			
+			User user = new User(code, name, phone);
+			list.add(user);
+		}
 	}
 
 	private int generateUserCode() {
@@ -180,10 +202,9 @@ class AccountManager {
 
 	private Random random = new Random();
 
-	private ArrayList<Account> list;
+	private static ArrayList<Account> list = new ArrayList<Account>();
 
 	public AccountManager() {
-		this.list = new ArrayList<Account>();
 	}
 
 	public Account createAccount(int userCode, String password) {
@@ -231,6 +252,25 @@ class AccountManager {
 
 	public int getAccountSize() {
 		return this.list.size();
+	}
+	
+	public static void dataSetting(String data) {
+		String[] temp = data.split("\n");
+		
+		for(int i=0; i<temp.length; i++) {
+			String[] info = temp[i].split("/");
+			
+			int userCode = Integer.parseInt(info[0]);
+			String number = info[1];
+			int balance = Integer.parseInt(info[2]);
+			
+			
+			User user = UserManager.findUserByUserCode(userCode);
+			String password = user.getPhone();
+			
+			Account account = new Account(userCode, number, password, balance);
+			list.add(account);
+		}
 	}
 
 	private String generateNumber() {
@@ -519,7 +559,8 @@ class Bank {
 		System.out.println("------------");
 		System.out.println(status);
 		
-//		printDataAll();
+		printDataAll();
+		printDataSummery();
 	}
 	
 	private void printDataAll() {
@@ -533,6 +574,21 @@ class Bank {
 			Account account = accountManager.findAccountByIndex(i);
 			String info = String.format("%d) %s : %s", account.getUserCode(), account.getNumber(), toStringMoney(account.getBalance()));
 			System.out.println(info);
+		}
+	}
+	
+	private void printDataSummery() {
+		// test01 김철수 는 계좌를 3개 가지고 있다.
+		
+		ArrayList<User> userList = userManager.findUserAll();
+		
+		System.out.println("------------");
+		for(User user : userList) {
+			int userCode = user.getCode();
+			ArrayList<Account> accList = accountManager.findAccountAllByUserCode(userCode);
+			
+			String message = String.format("%d %s는 계좌를 %d개 가지고 있다.", userCode, user.getName(), accList.size());
+			System.out.println(message);
 		}
 	}
 
@@ -560,6 +616,32 @@ class Bank {
 
 public class Ex06 {
 	public static void main(String[] args) {
+		
+		// Static 
+		// ㄴ 메소드와 메소드 안에서 참조되는 변수들까지 -> 메모리 영역을 static으로 지정하여 해결 
+		
+		String userdata = "1001/pw1/김철수\n";
+		userdata += "1002/pw2/이영희\n";
+		userdata += "1003/pw3/신민수\n";
+		userdata += "1004/pw4/최상민";
+		
+		String accountdata = "1001/1111-1111-1111/8000\n";
+		accountdata += "1002/2222-2222-2222/5000\n";
+		accountdata += "1001/3333-3333-3333/11000\n";
+		accountdata += "1003/4444-4444-4444/9000\n";
+		accountdata += "1001/5555-5555-5555/5400\n";
+		accountdata += "1002/6666-6666-6666/1000\n";
+		accountdata += "1003/7777-7777-7777/1000\n";
+		accountdata += "1004/8888-8888-8888/1000";
+
+		// 1) test01 김철수 는 계좌를 3개 가지고있다.
+		// 2) test02 이영희 는 계좌를 2개 가지고있다.
+		// 3) test03 신민수 는 계좌를 2개 가지고있다.
+		// 4) test04 최상민 은 계좌를 1개 가지고있다. 
+		
+		UserManager.dataSetting(userdata);
+		AccountManager.dataSetting(accountdata);
+		
 		Bank system = new Bank("MEGA");
 		system.run();
 
